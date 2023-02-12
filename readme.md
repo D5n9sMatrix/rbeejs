@@ -1,0 +1,189 @@
+The Language Comprehensive R bee JavaScript
+================
+
+``` r
+<!-- . -->
+<!-- ├── all_letters.csv -->
+<!-- ├── all_letters.RData -->
+<!-- ├── df.txt -->
+<!-- ├── foo -->
+<!-- ├── language -->
+<!-- │   └── matrix -->
+<!-- │       └── gnu -->
+<!-- │           ├── bin -->
+<!-- │           │   ├── profvis::profvis -->
+<!-- │           │   │   ├── boxplot.formula -->
+<!-- │           │   │   │   └── boxplot.default -->
+<!-- │           │   │   │       └── <Anonymous> -->
+<!-- │           │   │   │           └── bplt.R -->
+<!-- │           │   │   ├── data.frame -->
+<!-- │           │   │   │   └── as.data.frame.character -->
+<!-- │           │   │   │       └── deparse1 -->
+<!-- │           │   │   │           └── deparse.R -->
+<!-- │           │   │   ├── library -->
+<!-- │           │   │   │   ├── checkConflicts -->
+<!-- │           │   │   │   └── loadNamespace -->
+<!-- │           │   │   │       ├── loadNamespace -->
+<!-- │           │   │   │       │   ├── loadNamespace -->
+<!-- │           │   │   │       │   │   ├── loadNamespace -->
+<!-- │           │   │   │       │   │   │   ├── method::cacheMetaData -->
+<!-- │           │   │   │       │   │   │   ├── namespaceImport -->
+<!-- │           │   │   │       │   │   │   │   └── namespaceImportFrom -->
+<!-- │           │   │   │       │   │   │   │       └── importIntoEnv.R -->
+<!-- │           │   │   │       │   │   │   └── vapply -->
+<!-- │           │   │   │       │   │   │       └── FUN -->
+<!-- │           │   │   │       │   │   │           └── methods::getFunction.R -->
+<!-- │           │   │   │       │   │   └── readRDS.R -->
+<!-- │           │   │   │       │   ├── methods::.getgenerics -->
+<!-- │           │   │   │       │   └── namespaceImportFrom.R -->
+<!-- │           │   │   │       └── methods::cacheMetaData -->
+<!-- │           │   │   ├── paste.R -->
+<!-- │           │   │   └── str.default -->
+<!-- │           │   │       └── strSub -->
+<!-- │           │   │           └── <Anonymous> -->
+<!-- │           │   │               └── str.default -->
+<!-- │           │   │                   └── formObj -->
+<!-- │           │   │                       └── format.fun -->
+<!-- │           │   │                           └── format.default -->
+<!-- │           │   │                               └── prettyNum.R -->
+<!-- │           │   └── rbeejs.R -->
+<!-- │           ├── data -->
+<!-- │           │   ├── label.data -->
+<!-- │           │   ├── result.data -->
+<!-- │           │   ├── stdin -->
+<!-- │           │   └── stdout -->
+<!-- │           ├── image -->
+<!-- │           │   ├── ar1-vector-linear-2.png -->
+<!-- │           │   ├── ar1-vector-linear.png -->
+<!-- │           │   ├── ar1-vector.png -->
+<!-- │           │   ├── beautiful-cars.png -->
+<!-- │           │   ├── biting-tedious.png -->
+<!-- │           │   ├── blitz-cars.png -->
+<!-- │           │   ├── boxplot-distance.png -->
+<!-- │           │   ├── boxplot-options-values.png -->
+<!-- │           │   ├── boxplot-speed.png -->
+<!-- │           │   ├── cake-chocolate.png -->
+<!-- │           │   ├── cake-glossary.png -->
+<!-- │           │   ├── cake-majestic.png -->
+<!-- │           │   ├── cake-species.png -->
+<!-- │           │   ├── candles-species.png -->
+<!-- │           │   ├── cars-brow-brow.png -->
+<!-- │           │   ├── complex-wave-2.png -->
+<!-- │           │   ├── complex-wave-non-linear.png -->
+<!-- │           │   ├── complex-waves-cashes.png -->
+<!-- │           │   ├── complex-waves.png -->
+<!-- │           │   ├── cumulative-distribution.png -->
+<!-- │           │   ├── distance-speed-cars.png -->
+<!-- │           │   ├── distance-stop-speed-cars-2023.png -->
+<!-- │           │   ├── distance-stop-speed-cars.png -->
+<!-- │           │   ├── dual-candle.png -->
+<!-- │           │   ├── eg-complex-overflowed-non-linear.png -->
+<!-- │           │   ├── eg-complex-wave-2.png -->
+<!-- │           │   ├── eg-complex-wave.png -->
+<!-- │           │   ├── elements-linear.png -->
+<!-- │           │   ├── elements-output.png -->
+<!-- │           │   ├── elements-states.png -->
+<!-- │           │   ├── global-AirPassengers-candles.png -->
+<!-- │           │   ├── global-AirPassengers.png -->
+<!-- │           │   ├── histogram-ideaths-graphic-green.png -->
+<!-- │           │   ├── histogram-ideaths.png -->
+<!-- │           │   ├── histogram-speed.png -->
+<!-- │           │   ├── histogram-values-sibiting.png -->
+<!-- │           │   ├── map-vector-2.png -->
+<!-- │           │   ├── map-vector-3.png -->
+<!-- │           │   ├── map-vector-4.png -->
+<!-- │           │   ├── map-vector-5.png -->
+<!-- │           │   ├── map-vector-6.png -->
+<!-- │           │   ├── map-vector.png -->
+<!-- │           │   ├── mechanical-candle.png -->
+<!-- │           │   ├── memory-view-characters.png -->
+<!-- │           │   ├── more-gg-beautiful-count-cut-color.png -->
+<!-- │           │   ├── more-gg-beautiful-graphic-Ax-and-Ay.png -->
+<!-- │           │   ├── more-gg-beautiful-groups.png -->
+<!-- │           │   ├── more-gg-beautiful-keys.png -->
+<!-- │           │   ├── more-gg-beautiful-mpg-disp-cyl.png -->
+<!-- │           │   ├── more-gg-beautiful-mpg-disp-linear-blue.png -->
+<!-- │           │   ├── more-gg-beautiful-mpg-disp.png -->
+<!-- │           │   ├── more-gg-beautiful-path.png -->
+<!-- │           │   ├── more-gg-beautiful-price-cut-analysis.png -->
+<!-- │           │   ├── more-gg-beautiful-price-cut.png -->
+<!-- │           │   ├── more-gg-beautiful-species.png -->
+<!-- │           │   ├── more-gg-count-cut-color-side.png -->
+<!-- │           │   ├── muse-truck.png -->
+<!-- │           │   ├── pattern-arima.png -->
+<!-- │           │   ├── plant_boxplot.png -->
+<!-- │           │   ├── rain-sex-linear-green-mpg.png -->
+<!-- │           │   ├── rain-sex-linear-green.png -->
+<!-- │           │   ├── rain-sex.png -->
+<!-- │           │   ├── repeating-pattern-2.png -->
+<!-- │           │   ├── repeating-pattern.png -->
+<!-- │           │   ├── repeating-pattern-waves.png -->
+<!-- │           │   ├── repeating-pattern-waves-red-black.png -->
+<!-- │           │   ├── sayden-robotics.png -->
+<!-- │           │   ├── sibiting-boy.png -->
+<!-- │           │   ├── sibiting-Its-beautiful.png -->
+<!-- │           │   ├── sibiting-very-shameless.png -->
+<!-- │           │   ├── species-candle.png -->
+<!-- │           │   ├── speed-and-distance.png -->
+<!-- │           │   ├── survival-data.png -->
+<!-- │           │   ├── survival-linear-blue.png -->
+<!-- │           │   ├── survival-linear-red.png -->
+<!-- │           │   ├── time-series-arima.png -->
+<!-- │           │   ├── values-x-and-y-flying.png -->
+<!-- │           │   ├── values-x-and-y.png -->
+<!-- │           │   ├── waves-sines-2.png -->
+<!-- │           │   ├── waves-sines-3.png -->
+<!-- │           │   ├── waves-sines-id-logic.png -->
+<!-- │           │   ├── waves-sines.png -->
+<!-- │           │   ├── weves-sine-4.png -->
+<!-- │           │   ├── will-cake.png -->
+<!-- │           │   └── winged-states.png -->
+<!-- │           ├── lib -->
+<!-- │           ├── pdf -->
+<!-- │           │   ├── launch-language-concordance.tex -->
+<!-- │           │   ├── launch-language.log -->
+<!-- │           │   ├── launch-language.pdf -->
+<!-- │           │   ├── launch-language.Rnw -->
+<!-- │           │   ├── launch-language.synctex.gz -->
+<!-- │           │   ├── launch-language.tex -->
+<!-- │           │   ├── rbeejs-concordance.tex -->
+<!-- │           │   ├── rbeejs.log -->
+<!-- │           │   ├── rbeejs.pdf -->
+<!-- │           │   ├── rbeejs.Rnw -->
+<!-- │           │   ├── rbeejs.synctex.gz -->
+<!-- │           │   ├── rbeejs.tex -->
+<!-- │           │   └── Rplots.pdf -->
+<!-- │           ├── profile -->
+<!-- │           │   ├── deparse.Rprofvis -->
+<!-- │           │   ├── methods::getFunction.Rprofvis -->
+<!-- │           │   ├── prettyNum.Rprofvis -->
+<!-- │           │   └── rbeejs.Rprofvis -->
+<!-- │           ├── rcpp -->
+<!-- │           │   └── muRcpp.cpp -->
+<!-- │           └── test -->
+<!-- ├── mtcars.csv -->
+<!-- ├── rbeejs.Rproj -->
+<!-- ├── readme.md -->
+<!-- └── readme.Rmd -->
+```
+
+# Print tables using `xtable`
+
+``` r
+print(xtable(df, caption="My Table"))
+```
+
+% latex table generated in R 4.1.2 by xtable 1.8-4 package % Sun Feb 12
+13:24:33 2023
+# Print tables using `pander`
+
+``` r
+pander(df)
+```
+
+|                    | mpg  | cyl | disp | hp  |
+|:------------------:|:----:|:---:|:----:|:---:|
+|   **Mazda RX4**    |  21  |  6  | 160  | 110 |
+| **Mazda RX4 Wag**  |  21  |  6  | 160  | 110 |
+|   **Datsun 710**   | 22.8 |  4  | 108  | 93  |
+| **Hornet 4 Drive** | 21.4 |  6  | 258  | 110 |

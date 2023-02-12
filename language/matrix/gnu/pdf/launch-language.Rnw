@@ -1,0 +1,27 @@
+\documentclass{article}
+
+<<echo=FALSE, cache=FALSE>>=
+knitr::opts_chunk$set(echo = FALSE, cache = TRUE)
+knitr::read_chunk("/home/denis/CommaProjects/rbeejs/language/matrix/gnu/bin/rbeejs.R")
+@
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+\textbf{The Language Comprehensive R bee JavaScript}
+\\\\
+This launch of languages understandable R bee js material mathematics about the
+files creation to base of formation of application about builder in information
+in what stable sorted list of function to as class and as interface about the
+function for loop builder about the tools.
+
+formation o files to documentation
+<<Chunk1>>=
+## r-file.R
+## note the specific comment style of a single pound sign followed by four dashes
+# ---- Chunk1 ----
+print("This is R Code in an external file")
+x <- seq(1:10)
+y <- rev(seq(1:10))
+plot(x,y)
+@
+\end{document}
