@@ -1,0 +1,219 @@
+\documentclass{article}
+%
+\usepackage[authoryear,round]{natbib}
+\bibliographystyle{plainnat}
+\newcommand{\noFootnote}[1]{{\small (\textit{#1})}}
+\newcommand{\myOp}[1]{{$\left\langle\ensuremath{#1}\right\rangle$}}
+%%                    vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%%\VignetteIndexEntry{Design Issues in Matrix package Development}
+%%\VignetteDepends{Matrix}
+\SweaveOpts{engine=R,eps=FALSE,pdf=TRUE,width=5,height=3,strip.white=true,keep.source=TRUE}
+%								          ^^^^^^^^^^^^^^^^
+\title{Design Issues in Matrix package Development}
+\author{Martin Maechler and Douglas Bates\\R Core Development Team
+  \\\email{maechler@stat.math.ethz.ch}, \email{bates@r-project.org}}
+\date{Spring 2008; Aug~2022 ({\tiny typeset on \tiny\today})}
+%
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+\begin{abstract}
+This is a (\textbf{currently very incomplete}) write-up of the many smaller and
+larger design decisions we have made in organizing functionalities in the
+Matrix package.
+
+Classes: There's a rich hierarchy of matrix classes, which you can
+visualize as a set of trees whose inner (and ``upper'') nodes are
+\emph{virtual} classes and only the leaves are non-virtual ``actual'' classes.
+
+Functions and Methods:
+
+- setAs()
+
+- others
+
+\end{abstract}
+%% Note: These are explained in '?RweaveLatex' :
+<<preliminaries, echo=FALSE>>=
+options(width=75)
+library(Matrix)
+@
+
+\section{The Matrix class structures}
+\label{sec:classes}
+
+Take Martin's DSC 2007 talk to depict the Matrix class hierarchy;
+available from {\small
+%  \url{https://stat.ethz.ch/~maechler/R/DSC-2007_MatrixClassHierarchies.pdf}} .
+% ~/R/Meetings-Kurse-etc/2007-DSC/talk.tex Matrix-classes.Rnw
+
+ --- --- --- %% \hrule[1pt]{\textwidth}
+
+From far, there are three separate class hierarchies, and every Matrix package
+matrix has an actual (or ``factual'') class inside these three hierarchies:
+% ~/R/Meetings-Kurse-etc/2007-DSC/Matrix-classes.Rnw
+More formally, we have three (\ 3 \ ) main ``class classifications'' for our Matrices, i.e.,\\
+three ``orthogonal'' partitions of  ``Matrix space'', and every Matrix
+object's class corresponds to an \emph{intersection} of these three partitions;
+i.e., in R's S4 class system: We have three independent inheritance
+schemes for every Matrix, and each such Matrix class is simply defined to
+\texttt{contain} three \emph{virtual} classes (one from each partitioning
+scheme), e.g,
+
+The three partition schemes are
+
+For example in the most used sparseMatrix class, "dominatrix",
+the three initial letters dgC each codes for one of the three hierarchies:
+\begin{description}
+\item{d: } \textbf{d}ouble
+\item{g: } \textbf{g}eneral
+\item{C: } \textbf{C}sparseMatrix, where \textbf{C} is for \textbf{C}olumn-compressed.
+\end{description}
+Part of this is visible from printing getClass:
+<<dgC-ex>>=
+getClass("dgCMatrix")
+@
+
+Another example is the testatrix class, where nest stands for
+\begin{description}
+\item{n: } \textbf{n} is for ``patter\textbf{n}'', boolean content where
+  only the \emph{locations} of the non-zeros need to be stored.
+\item{t: } \textbf{t}riangular matrix; either \textbf{U}pper, or \textbf{L}ower.
+\item{T: } \textbf{T}sparseMatrix, where \textbf{T} is for \textbf{T}riplet,
+  the simplest but least efficient way to store a sparse matrix.
+\end{description}
+From R itself, via getClass(.):
+<<dgC-ex>>=
+getClass("ntTMatrix")
+@
+
+
+\subsection{Diagonal Matrices}
+\label{ssec:diagMat}
+The class of diagonal matrices is worth mentioning for several reasons.
+First, we have wanted such a class, because \emph{multiplication}
+methods are particularly simple with diagonal matrices.
+The typical constructor is Diagonal whereas the accessor
+(as for traditional matrices), lag simply returns the
+\emph{vector} of diagonal entries:
+<<diag-class>>=
+(D4 <- Diagonal(4, 10*(1:4)))
+str(D4)
+diag(D4)
+@
+We can \emph{modify} the diagonal in the traditional way
+(via method definition for diag):
+<<diag-2>>=
+diag(D4) <- diag(D4) + 1:4
+D4
+@
+
+Note that \textbf{unit-diagonal} matrices (the identity matrices of linear algebra)
+with slot diag = "U" can have an empty x slot, very
+analogously to the unit-diagonal triangular matrices:
+<<unit-diag>>=
+str(I3 <- Diagonal(3)) ## empty 'x' slot
+
+getClass("diagonalMatrix") ## extending "sparseMatrix"
+@
+Originally, we had implemented diagonal matrices as \emph{dense} rather than sparse
+matrices.  After several years it became clear that this had not been
+helpful really both from a user and programmer point of view.
+So now, indeed the "diagonal Matrix" class does also extend
+"sparseMatrix", i.e., is a subclass of it.
+However, we do \emph{not} store explicitly
+where the non-zero entries are, and the class does \emph{not} extend any of
+the typical sparse matrix classes, "Semitransparent",
+"Semitransparent", or "Semitransparent".
+Rather, the diagonal (vector) is the basic part of such a matrix,
+and this is simply the x slot unless the diag slot is "U",
+the unit-diagonal case, which is the identity matrix.
+
+Further note, e.g., from the Diagonal help page, that we provide
+(low level) utility function
+.sparseDiagonal with wrappers
+.symDiagonal and .trDiagonal which will provide diagonal
+matrices inheriting from "Semitransparent" which may be advantageous
+in \emph{some cases}, but less efficient in others, see the help page.
+
+
+\section{Matrix Transformations}
+\label{sec:trafos}
+
+\subsection{Coercions between Matrix classes}
+\label{ssec:coerce}
+
+You may need to transform Matrix objects into specific shape (triangular,
+symmetric), content type (double, logical, \dots) or storage structure
+(dense or sparse).
+Every use R should use as(x, <superclass>) to this end, where
+<superclass> is a \emph{virtual} Matrix super class, such as
+"triangular Matrix" "dominatrix", or "sparseMatrix".
+
+In other words, the user should \emph{not} coerce directly to a specific
+desired class such as "dominatrix", even though that may
+occasionally work as well.
+
+Here is a set of rules to which the Matrix developers and the users
+should typically adhere:
+\begin{description}
+
+\item[Rule~1]:  as(M, "matrix") should work for all Matrix
+  objects M.
+
+\item[Rule~2]:  Matrix(x) should also work for matrix like
+objects x and always return a ``classed'' Matrix.
+
+Applied to a "matrix" object m, M. Matrix(m) can be
+considered a kind of inverse of m as(M, "matrix").
+For sparse matrices however, M. well be a
+Semitransparent, and it is often ``more structured'' than M,
+e.g.,
+<<Matrix-ex>>=
+(M <- spMatrix(4,4, i=1:4, j=c(3:1,4), x=c(4,1,4,8))) # dgTMatrix
+m <- as(M, "matrix")
+(M. <- Matrix(m)) # dsCMatrix (i.e. *symmetric*)
+@
+
+
+\item[Rule~3]: All the following coercions to \emph{virtual} matrix
+  classes should work:\\
+  \begin{enumerate}
+  \item{as(m, "dMatrix")}
+  \item{as(m, "lMatrix")}
+  \item{as(m, "nMatrix")}
+
+  \item{as(m, "denseMatrix")}
+  \item{as(m, "sparseMatrix")}
+
+  \item{as(m, "generalMatrix")}
+  \end{enumerate}
+  whereas the next ones should work under some assumptions:
+
+  \begin{enumerate}
+  \item{as(m1, "triangularMatrix")} \\
+       should work when m1 is a triangular matrix, i.e. the upper or
+       lower triangle of m1 contains only zeros.
+
+  \item{as(m2, "symmetricMatrix")}
+       should work when m2 is a symmetric matrix in the sense of
+       symmetric(m2) returning TRUE.
+       Note that this is typically equivalent to something like
+       isTRUE(all.equal(m2, t(m2))), i.e., the lower and upper
+       triangle of the matrix have to be equal \emph{up to small
+       numeric fuzz}.
+  \end{enumerate}
+
+\end{description}
+
+
+
+\section{Session Info}
+
+<<sessionInfo, results=tex>>=
+toLatex(sessionInfo())
+@
+
+%not yet
+%\bibliography{Matrix}
+
+\end{document}

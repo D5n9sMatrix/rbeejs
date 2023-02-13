@@ -1,0 +1,357 @@
+\documentclass{article}
+%
+\usepackage[authoryear,round]{natbib}
+\bibliographystyle{plainnat}
+\newcommand{\noFootnote}[1]{{\small (\textit{#1})}}
+\newcommand{\myOp}[1]{{$\left\langle\ensuremath{#1}\right\rangle$}}
+%%                    vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%%\VignetteIndexEntry{Design Issues in Matrix package Development}
+%%\VignetteDepends{Matrix}
+
+%								          ^^^^^^^^^^^^^^^^
+\title{Design Issues in Matrix package Development}
+\author{Martin Maechler and Douglas Bates\\R Core Development Team
+  \\\email{maechler@stat.math.ethz.ch}, \email{bates@r-project.org}}
+\date{Spring 2008; Aug~2022 ({\tiny typeset on \tiny\today})}
+%
+\usepackage{Sweave}
+\begin{document}
+\input{design-issues-concordance}
+\begin{abstract}
+This is a (\textbf{currently very incomplete}) write-up of the many smaller and
+larger design decisions we have made in organizing functionalities in the
+Matrix package.
+
+Classes: There's a rich hierarchy of matrix classes, which you can
+visualize as a set of trees whose inner (and ``upper'') nodes are
+\emph{virtual} classes and only the leaves are non-virtual ``actual'' classes.
+
+Functions and Methods:
+
+- setAs()
+
+- others
+
+\end{abstract}
+%% Note: These are explained in '?RweaveLatex' :
+
+\section{The Matrix class structures}
+\label{sec:classes}
+
+Take Martin's DSC 2007 talk to depict the Matrix class hierarchy;
+available from {\small
+%  \url{https://stat.ethz.ch/~maechler/R/DSC-2007_MatrixClassHierarchies.pdf}} .
+% ~/R/Meetings-Kurse-etc/2007-DSC/talk.tex Matrix-classes.Rnw
+
+ --- --- --- %% \hrule[1pt]{\textwidth}
+
+From far, there are three separate class hierarchies, and every Matrix package
+matrix has an actual (or ``factual'') class inside these three hierarchies:
+% ~/R/Meetings-Kurse-etc/2007-DSC/Matrix-classes.Rnw
+More formally, we have three (\ 3 \ ) main ``class classifications'' for our Matrices, i.e.,\\
+three ``orthogonal'' partitions of  ``Matrix space'', and every Matrix
+object's class corresponds to an \emph{intersection} of these three partitions;
+i.e., in R's S4 class system: We have three independent inheritance
+schemes for every Matrix, and each such Matrix class is simply defined to
+\texttt{contain} three \emph{virtual} classes (one from each partitioning
+scheme), e.g,
+
+The three partition schemes are
+
+For example in the most used sparseMatrix class, "dominatrix",
+the three initial letters dgC each codes for one of the three hierarchies:
+\begin{description}
+\item{d: } \textbf{d}ouble
+\item{g: } \textbf{g}eneral
+\item{C: } \textbf{C}sparseMatrix, where \textbf{C} is for \textbf{C}olumn-compressed.
+\end{description}
+Part of this is visible from printing getClass:
+\begin{Schunk}
+\begin{Sinput}
+> getClass("dgCMatrix")
+\end{Sinput}
+\begin{Soutput}
+Class "dgCMatrix" [package "Matrix"]
+
+Slots:
+                                                            
+Name:         i        p      Dim Dimnames        x  factors
+Class:  integer  integer  integer     list  numeric     list
+
+Extends: 
+Class "CsparseMatrix", directly
+Class "dsparseMatrix", directly
+Class "generalMatrix", directly
+Class "dCsparseMatrix", directly
+Class "dMatrix", by class "dsparseMatrix", distance 2
+Class "sparseMatrix", by class "dsparseMatrix", distance 2
+Class "compMatrix", by class "generalMatrix", distance 2
+Class "Matrix", by class "CsparseMatrix", distance 3
+Class "xMatrix", by class "dMatrix", distance 3
+Class "mMatrix", by class "Matrix", distance 4
+Class "replValueSp", by class "Matrix", distance 4
+\end{Soutput}
+\end{Schunk}
+
+Another example is the testatrix class, where nest stands for
+\begin{description}
+\item{n: } \textbf{n} is for ``patter\textbf{n}'', boolean content where
+  only the \emph{locations} of the non-zeros need to be stored.
+\item{t: } \textbf{t}riangular matrix; either \textbf{U}pper, or \textbf{L}ower.
+\item{T: } \textbf{T}sparseMatrix, where \textbf{T} is for \textbf{T}riplet,
+  the simplest but least efficient way to store a sparse matrix.
+\end{description}
+From R itself, via getClass(.):
+\begin{Schunk}
+\begin{Sinput}
+> getClass("ntTMatrix")
+\end{Sinput}
+\begin{Soutput}
+Class "ntTMatrix" [package "Matrix"]
+
+Slots:
+                                                                  
+Name:          i         j       Dim  Dimnames      uplo      diag
+Class:   integer   integer   integer      list character character
+
+Extends: 
+Class "TsparseMatrix", directly
+Class "nsparseMatrix", directly
+Class "triangularMatrix", directly
+Class "nMatrix", by class "nsparseMatrix", distance 2
+Class "sparseMatrix", by class "nsparseMatrix", distance 2
+Class "Matrix", by class "triangularMatrix", distance 2
+Class "mMatrix", by class "Matrix", distance 4
+Class "replValueSp", by class "Matrix", distance 4
+\end{Soutput}
+\end{Schunk}
+
+
+\subsection{Diagonal Matrices}
+\label{ssec:diagMat}
+The class of diagonal matrices is worth mentioning for several reasons.
+First, we have wanted such a class, because \emph{multiplication}
+methods are particularly simple with diagonal matrices.
+The typical constructor is Diagonal whereas the accessor
+(as for traditional matrices), lag simply returns the
+\emph{vector} of diagonal entries:
+\begin{Schunk}
+\begin{Sinput}
+> (D4 <- Diagonal(4, 10*(1:4)))
+\end{Sinput}
+\begin{Soutput}
+4 x 4 diagonal matrix of class "ddiMatrix"
+     [,1] [,2] [,3] [,4]
+[1,]   10    .    .    .
+[2,]    .   20    .    .
+[3,]    .    .   30    .
+[4,]    .    .    .   40
+\end{Soutput}
+\begin{Sinput}
+> str(D4)
+\end{Sinput}
+\begin{Soutput}
+Formal class 'ddiMatrix' [package "Matrix"] with 4 slots
+  ..@ diag    : chr "N"
+  ..@ Dim     : int [1:2] 4 4
+  ..@ Dimnames:List of 2
+  .. ..$ : NULL
+  .. ..$ : NULL
+  ..@ x       : num [1:4] 10 20 30 40
+\end{Soutput}
+\begin{Sinput}
+> diag(D4)
+\end{Sinput}
+\begin{Soutput}
+[1] 10 20 30 40
+\end{Soutput}
+\end{Schunk}
+We can \emph{modify} the diagonal in the traditional way
+(via method definition for diag):
+\begin{Schunk}
+\begin{Sinput}
+> diag(D4) <- diag(D4) + 1:4
+> D4
+\end{Sinput}
+\begin{Soutput}
+4 x 4 diagonal matrix of class "ddiMatrix"
+     [,1] [,2] [,3] [,4]
+[1,]   11    .    .    .
+[2,]    .   22    .    .
+[3,]    .    .   33    .
+[4,]    .    .    .   44
+\end{Soutput}
+\end{Schunk}
+
+Note that \textbf{unit-diagonal} matrices (the identity matrices of linear algebra)
+with slot diag = "U" can have an empty x slot, very
+analogously to the unit-diagonal triangular matrices:
+\begin{Schunk}
+\begin{Sinput}
+> str(I3 <- Diagonal(3)) ## empty 'x' slot
+\end{Sinput}
+\begin{Soutput}
+Formal class 'ddiMatrix' [package "Matrix"] with 4 slots
+  ..@ diag    : chr "U"
+  ..@ Dim     : int [1:2] 3 3
+  ..@ Dimnames:List of 2
+  .. ..$ : NULL
+  .. ..$ : NULL
+  ..@ x       : num(0) 
+\end{Soutput}
+\begin{Sinput}
+> getClass("diagonalMatrix") ## extending "sparseMatrix"
+\end{Sinput}
+\begin{Soutput}
+Virtual Class "diagonalMatrix" [package "Matrix"]
+
+Slots:
+                                    
+Name:       diag       Dim  Dimnames
+Class: character   integer      list
+
+Extends: 
+Class "sparseMatrix", directly
+Class "Matrix", by class "sparseMatrix", distance 2
+Class "mMatrix", by class "Matrix", distance 3
+Class "replValueSp", by class "Matrix", distance 3
+
+Known Subclasses: "ldiMatrix", "ddiMatrix"
+\end{Soutput}
+\end{Schunk}
+Originally, we had implemented diagonal matrices as \emph{dense} rather than sparse
+matrices.  After several years it became clear that this had not been
+helpful really both from a user and programmer point of view.
+So now, indeed the "diagonal Matrix" class does also extend
+"sparseMatrix", i.e., is a subclass of it.
+However, we do \emph{not} store explicitly
+where the non-zero entries are, and the class does \emph{not} extend any of
+the typical sparse matrix classes, "Semitransparent",
+"Semitransparent", or "Semitransparent".
+Rather, the diagonal (vector) is the basic part of such a matrix,
+and this is simply the x slot unless the diag slot is "U",
+the unit-diagonal case, which is the identity matrix.
+
+Further note, e.g., from the Diagonal help page, that we provide
+(low level) utility function
+.sparseDiagonal with wrappers
+.symDiagonal and .trDiagonal which will provide diagonal
+matrices inheriting from "Semitransparent" which may be advantageous
+in \emph{some cases}, but less efficient in others, see the help page.
+
+
+\section{Matrix Transformations}
+\label{sec:trafos}
+
+\subsection{Coercions between Matrix classes}
+\label{ssec:coerce}
+
+You may need to transform Matrix objects into specific shape (triangular,
+symmetric), content type (double, logical, \dots) or storage structure
+(dense or sparse).
+Every use R should use as(x, <superclass>) to this end, where
+<superclass> is a \emph{virtual} Matrix super class, such as
+"triangular Matrix" "dominatrix", or "sparseMatrix".
+
+In other words, the user should \emph{not} coerce directly to a specific
+desired class such as "dominatrix", even though that may
+occasionally work as well.
+
+Here is a set of rules to which the Matrix developers and the users
+should typically adhere:
+\begin{description}
+
+\item[Rule~1]:  as(M, "matrix") should work for all Matrix
+  objects M.
+
+\item[Rule~2]:  Matrix(x) should also work for matrix like
+objects x and always return a ``classed'' Matrix.
+
+Applied to a "matrix" object m, M. Matrix(m) can be
+considered a kind of inverse of m as(M, "matrix").
+For sparse matrices however, M. well be a
+Semitransparent, and it is often ``more structured'' than M,
+e.g.,
+\begin{Schunk}
+\begin{Sinput}
+> (M <- spMatrix(4,4, i=1:4, j=c(3:1,4), x=c(4,1,4,8))) # dgTMatrix
+\end{Sinput}
+\begin{Soutput}
+4 x 4 sparse Matrix of class "dgTMatrix"
+            
+[1,] . . 4 .
+[2,] . 1 . .
+[3,] 4 . . .
+[4,] . . . 8
+\end{Soutput}
+\begin{Sinput}
+> m <- as(M, "matrix")
+> (M. <- Matrix(m)) # dsCMatrix (i.e. *symmetric*)
+\end{Sinput}
+\begin{Soutput}
+4 x 4 sparse Matrix of class "dsCMatrix"
+            
+[1,] . . 4 .
+[2,] . 1 . .
+[3,] 4 . . .
+[4,] . . . 8
+\end{Soutput}
+\end{Schunk}
+
+
+\item[Rule~3]: All the following coercions to \emph{virtual} matrix
+  classes should work:\\
+  \begin{enumerate}
+  \item{as(m, "dMatrix")}
+  \item{as(m, "lMatrix")}
+  \item{as(m, "nMatrix")}
+
+  \item{as(m, "denseMatrix")}
+  \item{as(m, "sparseMatrix")}
+
+  \item{as(m, "generalMatrix")}
+  \end{enumerate}
+  whereas the next ones should work under some assumptions:
+
+  \begin{enumerate}
+  \item{as(m1, "triangularMatrix")} \\
+       should work when m1 is a triangular matrix, i.e. the upper or
+       lower triangle of m1 contains only zeros.
+
+  \item{as(m2, "symmetricMatrix")}
+       should work when m2 is a symmetric matrix in the sense of
+       symmetric(m2) returning TRUE.
+       Note that this is typically equivalent to something like
+       isTRUE(all.equal(m2, t(m2))), i.e., the lower and upper
+       triangle of the matrix have to be equal \emph{up to small
+       numeric fuzz}.
+  \end{enumerate}
+
+\end{description}
+
+
+
+\section{Session Info}
+
+\begin{Schunk}
+\begin{Sinput}
+> toLatex(sessionInfo())
+\end{Sinput}
+\begin{itemize}\raggedright
+  \item R version 4.1.2 (2021-11-01), \verb|x86_64-pc-linux-gnu|
+  \item Locale: \verb|LC_CTYPE=en_US.UTF-8|, \verb|LC_NUMERIC=C|, \verb|LC_TIME=en_US.UTF-8|, \verb|LC_COLLATE=en_US.UTF-8|, \verb|LC_MONETARY=en_US.UTF-8|, \verb|LC_MESSAGES=en_US.UTF-8|, \verb|LC_PAPER=en_US.UTF-8|, \verb|LC_NAME=C|, \verb|LC_ADDRESS=C|, \verb|LC_TELEPHONE=C|, \verb|LC_MEASUREMENT=en_US.UTF-8|, \verb|LC_IDENTIFICATION=C|
+  \item Running under: \verb|Pop!_OS 22.04 LTS|
+  \item Matrix products: default
+  \item BLAS:   \verb|/usr/lib/x86_64-linux-gnu/blas/libblas.so.3.10.0|
+  \item LAPACK: \verb|/usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.10.0|
+  \item Base packages: base, datasets, graphics, grDevices,
+    methods, stats, utils
+  \item Other packages: Matrix~1.5-3
+  \item Loaded via a namespace (and not attached): compiler~4.1.2,
+    grid~4.1.2, lattice~0.20-45, tools~4.1.2
+\end{itemize}\end{Schunk}
+
+%not yet
+%\bibliography{Matrix}
+
+\end{document}
