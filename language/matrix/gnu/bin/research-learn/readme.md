@@ -1,0 +1,80 @@
+Research learn comprehensive Python math
+================
+
+### 4.1.7 Calling a Function Defined with Keyword Parameters
+
+Let us adjust the previous program slightly, introducing keyword
+parameters in the definition. For example, if we use 0.6 as a default
+value for t, and aim to get the same printout as before, the program
+reads
+
+``` python
+def xy(v0x, v0y, t=0.6):
+"""Compute horizontal and vertical positions at time t"""
+g = 9.81
+# acceleration of gravity
+return v0x*t, v0y*t - 0.5*g*t**2
+v_init_x = 2.0
+v_init_y = 5.0
+# initial velocity in x
+# initial velocity in y
+x, y = xy(v_init_x, v_init_y)
+print(’Horizontal position: {:g} , Vertical position: {:g}’.format(x, y))
+```
+
+Alternatively, with default values for all the parameters, and again
+aiming for the same printout, our program (ball_position_xy.py) appears
+as
+
+``` python
+def xy(v0x=2.0, v0y=5.0, t=0.6):
+"""Computes horizontal and vertical positions at time t"""
+g = 9.81
+# acceleration of gravity
+return v0x*t, v0y*t - 0.5*g*t**2
+x, y = xy()
+print(’Horizontal position: {:g} , Vertical position: {:g}’.format(x, y))
+```
+
+Running the code, we get the printout Horizontal position: 1.2 ,
+Vertical position: 1.2342 Some, or all, of the default values may also
+be overridden, e.g., like
+
+``` python
+x, y = xy(v0y=6.0) # override default value for v0y only
+```
+
+which means that xy will run with default values for v0x and t, while
+v0y will have the value 6.0, as specified in the function call. The
+output then, becomes Horizontal position: 1.2 , Vertical position:
+1.8342 which is reasonable, since the initial velocity for the vertical
+direction was higher than in the previous case.
+
+### 4.1.8 A Function with Another Function as Input Argument
+
+Functions are straightforwardly passed as arguments to other functions.
+This is illustrated by the following script function_as_argument.py,
+where a function sums up function values of another function:
+
+``` python
+def f(x):
+    return x
+def g(x):
+    return x**2
+def sum_function_values(f, start, stop):
+"""Sum up function values for integer arguments as
+f(start) + f(start+1) + f(start+2) + ... + f(stop)"""
+    S = 0
+for i in range(start, stop+1, 1):
+    S = S + f(i)
+return S
+print(’Sum with f becomes {:g}’.format(sum_function_values(f, 1, 3)))
+print(’Sum with g becomes {:g}’.format(sum_function_values(g, 1, 3)))
+```
+
+We note that the function sum_function_values takes a function as its
+first argument and repeatedly calls that function without (of course)
+knowing what that function does, it just gets the function values back
+and sums them up! Remember that the argument f in the function header
+sum_function_values (f, start, stop) and the function defined by the
+name f, is not the same. The
